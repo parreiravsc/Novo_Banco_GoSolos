@@ -1,0 +1,289 @@
+{
+  "NomeDoenca": "Fusariose",
+  "DataCriacao": "13/10/2025",
+  "DataAtualizacao": "13/10/2025",
+  "Versao": "1.0",
+  "CulturasAfetadas": [
+    {
+      "Cultura": "Café",
+      "PesoImpacto": 1,
+      "DadosPatogenosAssociados": [
+        {
+          "NomePatogeno": "Fusarium oxysporum",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [
+                "Bacillus velezensis",
+                "Bacillus amyloliquefaciens",
+                "Trichoderma harzianum",
+                "Trichoderma viride",
+                "Trichoderma asperellum",
+                "Trichoderma reesei",
+                "Trichoderma koningiopsis"
+              ],
+              "IndiceAssociado": [
+                "Fungicida",
+                "Nematicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        },
+        {
+          "NomePatogeno": "Fusarium sp",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 0.2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [],
+              "IndiceAssociado": [
+                "Fungicida",
+                "Nematicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        },
+        {
+          "NomePatogeno": "Fusarium decemcellulare",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 0.2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [],
+              "IndiceAssociado": [
+                "Fungicida",
+                "Nematicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        },
+        {
+          "NomePatogeno": "Fusarium lateritium",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 0.2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [],
+              "IndiceAssociado": [
+                "Fungicida",
+                "Nematicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        },
+        {
+          "NomePatogeno": "Fusarium solani",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 0.2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [
+                "Bacillus velezensis",
+                "Bacillus amyloliquefaciens",
+                "Bacillus subtilis",
+                "Trichoderma harzianum",
+                "Trichoderma hamatum"
+              ],
+              "IndiceAssociado": [
+                "Fungicida",
+                "Nematicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        }
+      ],
+      "Sintomas": [],
+      "CondicoesFavoraveis": [],
+      "BiocontroladoresDoenca": [
+        {
+          "ComercialDoenca": [
+            "Aspergillus tubingensis",
+            "Mortierella sp",
+            "Lysobacter enzymogenes",
+            "Saitozyma podzolica",
+            "Streptomyces sp.",
+            "Pseudomonas sp.",
+            "Paenibacillus sp.",
+            "Mortierella sp.",
+            "Penicillium citrinum",
+            "Penicillium sp.",
+            "Hypocrea sp.",
+            "Lasiodiplodia theobromae",
+            "Mucor circinelloides",
+            "Aspergillus flavus",
+            "Aspergillus niger",
+            "Penicillium oxalicum",
+            "Acinobacter calcoaceticus"
+          ],
+          "ConservativoDoenca": [],
+          "IndiceBiocontroleAssociado": [
+            "Fungicida",
+            "Nematicida"
+          ]
+        }
+      ],
+      "MicrorganimosAgravantes": [
+        "Meloidogyne sp.",
+        "Pratylenchus sp."
+      ]
+    },
+    {
+      "Cultura": "Tabaco",
+      "PesoImpacto": 1,
+      "DadosPatogenosAssociados": [
+        {
+          "NomePatogeno": "Fusarium oxysporum",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [
+                "Trichoderma sp."
+              ],
+              "IndiceAssociado": [
+                "Fungicida",
+                "Nematicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        },
+        {
+          "NomePatogeno": "Fusarium sp",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 0.2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [
+                "Trichoderma sp."
+              ],
+              "IndiceAssociado": [
+                "Fungicida",
+                "Nematicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        }
+      ],
+      "Sintomas": [],
+      "CondicoesFavoraveis": [],
+      "BiocontroladoresDoenca": [
+        {
+          "ComercialDoenca": [
+            "Bacillus velezensis",
+            "Bacillus amyloliquefaciens",
+            "Trichoderma harzianum",
+            "Trichoderma viride",
+            "Trichoderma asperellum",
+            "Trichoderma reesei",
+            "Trichoderma koningiopsis",
+            "Pseudomonas sp."
+          ],
+          "ConservativoDoenca": [],
+          "IndiceBiocontroleAssociado": [
+            "Fungicida",
+            "Nematicida"
+          ]
+        }
+      ],
+      "MicrorganimosAgravantes": [
+        "Meloidogyne sp."
+      ]
+    },
+    {
+      "Cultura": "Alho",
+      "PesoImpacto": 1,
+      "DadosPatogenosAssociados": [
+        {
+          "NomePatogeno": "Fusarium oxysporum",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [
+                "Saitozyma podzolica",
+                "Streptomyces sp.",
+                "Pseudomonas sp.",
+                "Paenibacillus sp.",
+                "Mortierella sp.",
+                "Penicillium citrinum"
+              ],
+              "IndiceAssociado": [
+                "Fungicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        },
+        {
+          "NomePatogeno": "Pleospora Allii",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [],
+              "IndiceAssociado": [
+                "Fungicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        },
+        {
+          "NomePatogeno": "Stemphylium sp.",
+          "Sinonimos": [],
+          "TipoPatogeno": "Fungo",
+          "Peso": 2,
+          "BiocontroladoresPatogenos": [
+            {
+              "ComerciaisEspecificos": [],
+              "ConservativosEspecificos": [],
+              "IndiceAssociado": [
+                "Fungicida"
+              ]
+            }
+          ],
+          "MicrorganimosAgonistas": []
+        }
+      ],
+      "Sintomas": [],
+      "CondicoesFavoraveis": [],
+      "BiocontroladoresDoenca": [
+        {
+          "ComercialDoenca": [],
+          "ConservativoDoenca": [],
+          "IndiceBiocontroleAssociado": [
+            "Fungicida",
+            "Nematicida"
+          ]
+        }
+      ],
+      "MicrorganimosAgravantes": []
+    }
+  ]
+}
