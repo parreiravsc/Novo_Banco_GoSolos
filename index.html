@@ -167,7 +167,8 @@
             return;
         }
         
-        const newDataArray = coletarDadosDoFormulario(); // Pega os dados editados
+        // Linha 170: Chama a coleta de dados
+        const newDataArray = coletarDadosDoFormulario(); 
         const fileName = 'doencas_atualizadas_' + new Date().toISOString().slice(0, 10) + '.json';
         const jsonString = JSON.stringify(newDataArray, null, 2);
         
@@ -185,7 +186,7 @@
         alert(`Arquivo "${fileName}" salvo com sucesso! Contém ${newDataArray.length} doença(s).`);
     }
 
-    // --- HTML GENERATION & LOGIC (TODAS AS SEÇÕES AGORA SÃO PERMANENTEMENTE ABERTAS) ---
+    // --- HTML GENERATION & LOGIC ---
 
     // Gera o HTML de uma seção de Patógeno
     function gerarPatogenoHtml(patogeno, indexDoenca, indexCultura, indexPatogeno) {
@@ -316,11 +317,9 @@
         dataArray.forEach((doenca, indexDoenca) => {
             doencasContainer.innerHTML += gerarDoencaHtml(doenca, indexDoenca);
         });
-        
-        // Não há necessidade de initializeCollapsibles()
     }
 
-    // --- DATA COLLECTION (Corrigida) ---
+    // --- DATA COLLECTION (CORRIGIDA) ---
 
     function coletarDadosDoFormulario() {
         const newDataArray = [];
@@ -337,29 +336,24 @@
                 }
             });
 
+            // Funcao auxiliar para pegar o valor de textarea em qualquer escopo
+            const getTextareaArray = (selector, container = document) => {
+                const element = container.querySelector(selector);
+                // ESSENCIAL: Retorna string vazia se for null para prevenir o TypeError
+                const value = element ? element.value : ''; 
+                return value.split('\n').filter(s => s.trim() !== '');
+            };
+
             novaDoenca.CulturasAfetadas = [];
             doencaDiv.querySelector(`#culturas-container-${indexDoenca}`).querySelectorAll('.cultura-section').forEach((culturaDiv, indexCultura) => {
                 const novaCultura = {};
-
-                // Funcao auxiliar para pegar o valor do campo (evita o erro 'null')
-                const getElementValue = (selector, container = document) => {
-                    const element = container.querySelector(selector);
-                    return element ? element.value : '';
-                };
-
-                // Funcao auxiliar para pegar o valor de textarea e transformar em array de strings
-                const getTextareaArray = (selector) => {
-                    const value = getElementValue(selector);
-                    return value.split('\n').filter(s => s.trim() !== '');
-                };
-
 
                 culturaDiv.querySelectorAll('input[data-cultura-field]').forEach(input => {
                     const key = input.getAttribute('data-cultura-field');
                     novaCultura[key] = input.type === 'number' ? parseFloat(input.value) : input.value;
                 });
 
-                // Coleta de Arrays da Cultura usando getElementValue local
+                // Coleta de Arrays da Cultura
                 novaCultura.Sintomas = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-sintomas`);
                 novaCultura.CondicoesFavoraveis = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-condicoes`);
                 novaCultura.MicrorganimosAgravantes = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-agravantes`);
@@ -372,12 +366,12 @@
                 }];
 
                 novaCultura.DadosPatogenosAssociados = [];
-                culturaDiv.querySelector(`#patogenos-container-${indexDoenca}-${indexCultura}`).querySelectorAll('.patogeno-section').forEach((patogenoDiv, indexPatogeno) => {
+                culturaDiv.querySelector(`#patogenos-container-${indexDoenca}-${indexCultura}`).querySelectorAll('.patogeno-section').forEach((patogenoDiv) => {
                     const novoPatogeno = {};
                     
-                    // Funcao auxiliar para buscar dentro da PatogenoDiv
+                    // Funcao auxiliar para buscar DENTRO da PatogenoDiv usando seletor de sufixo (CORREÇÃO DE ÍNDICE)
                     const getPatogenoTextareaArray = (suffix) => {
-                        const element = patogenoDiv.querySelector(`[id$="${suffix}"]`); // Busca local e por sufixo de ID
+                        const element = patogenoDiv.querySelector(`[id$="${suffix}"]`); 
                         const value = element ? element.value : '';
                         return value.split('\n').filter(s => s.trim() !== '');
                     };
@@ -387,8 +381,7 @@
                         novoPatogeno[key] = input.type === 'number' ? parseFloat(input.value) : input.value;
                     });
                     
-                    // CORREÇÃO APLICADA AQUI (usando getPatogenoTextareaArray)
-                    // Anteriormente, falhava se os índices dinâmicos estivessem desalinhados.
+                    // CORREÇÃO APLICADA: Uso da função de busca local e segura (Linhas 368, 369, 372-374 corrigidas)
                     novoPatogeno.Sinonimos = getPatogenoTextareaArray('-sinonimos');
                     novoPatogeno.MicrorganimosAgonistas = getPatogenoTextareaArray('-agonistas');
 
@@ -411,16 +404,23 @@
         return newDataArray;
     }
 
-    // --- DYNAMIC ADDITION/REMOVAL ---
+    // --- DYNAMIC ADDITION/REMOVAL (CORRIGIDA) ---
 
     function getNextIndex(container, selector) {
         const sections = container.querySelectorAll(selector);
         if (sections.length === 0) return 0;
         let maxIndex = -1;
+        
         sections.forEach(section => {
-            const index = parseInt(section.getAttribute('data-index'));
-            if (index > maxIndex) maxIndex = index;
+            const indexStr = section.getAttribute('data-index');
+            const index = parseInt(indexStr);
+            
+            // CORREÇÃO: Garante que o índice é um número válido antes de comparar
+            if (!isNaN(index) && index > maxIndex) { 
+                 maxIndex = index;
+            }
         });
+        
         return maxIndex + 1;
     }
     
@@ -473,7 +473,8 @@
             "MicrorganimosAgonistas": []
         };
         
-        const html = gerarPatogenoHtml(novoPatogenoTemplate, doencaIndex, culturaIndex, newIndex); // Adicionei newIndex aqui para correção completa
+        // CORREÇÃO: Passando o newIndex para gerarPatogenoHtml (último parâmetro)
+        const html = gerarPatogenoHtml(novoPatogenoTemplate, doencaIndex, culturaIndex, newIndex); 
         patogenosContainer.insertAdjacentHTML('beforeend', html);
         
         alert(`Novo Patógeno adicionado à Cultura ${culturaIndex + 1}.`);
