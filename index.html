@@ -40,7 +40,7 @@
             padding: 15px; 
             border-radius: 8px; 
             position: relative; 
-            padding-top: 35px; /* Espaço para o botão remover */
+            padding-top: 35px;
         }
         .cultura-section { 
             border: 2px solid #28a745; 
@@ -167,7 +167,6 @@
             return;
         }
         
-        // Linha 170: Chama a coleta de dados
         const newDataArray = coletarDadosDoFormulario(); 
         const fileName = 'doencas_atualizadas_' + new Date().toISOString().slice(0, 10) + '.json';
         const jsonString = JSON.stringify(newDataArray, null, 2);
@@ -319,7 +318,7 @@
         });
     }
 
-    // --- DATA COLLECTION (CORRIGIDA) ---
+    // --- DATA COLLECTION (CORRIGIDA - Robustez contra indices desalinhados) ---
 
     function coletarDadosDoFormulario() {
         const newDataArray = [];
@@ -366,6 +365,7 @@
                 }];
 
                 novaCultura.DadosPatogenosAssociados = [];
+                // Itera sobre as div's do patógeno
                 culturaDiv.querySelector(`#patogenos-container-${indexDoenca}-${indexCultura}`).querySelectorAll('.patogeno-section').forEach((patogenoDiv) => {
                     const novoPatogeno = {};
                     
@@ -381,7 +381,7 @@
                         novoPatogeno[key] = input.type === 'number' ? parseFloat(input.value) : input.value;
                     });
                     
-                    // CORREÇÃO APLICADA: Uso da função de busca local e segura (Linhas 368, 369, 372-374 corrigidas)
+                    // CORREÇÃO APLICADA: Busca segura por sufixo de ID dentro do escopo do patogenoDiv
                     novoPatogeno.Sinonimos = getPatogenoTextareaArray('-sinonimos');
                     novoPatogeno.MicrorganimosAgonistas = getPatogenoTextareaArray('-agonistas');
 
@@ -404,7 +404,7 @@
         return newDataArray;
     }
 
-    // --- DYNAMIC ADDITION/REMOVAL (CORRIGIDA) ---
+    // --- DYNAMIC ADDITION/REMOVAL (CORRIGIDA - Garantia de que o índice é numérico) ---
 
     function getNextIndex(container, selector) {
         const sections = container.querySelectorAll(selector);
@@ -415,12 +415,14 @@
             const indexStr = section.getAttribute('data-index');
             const index = parseInt(indexStr);
             
-            // CORREÇÃO: Garante que o índice é um número válido antes de comparar
+            // CORREÇÃO: Garante que o índice é um número válido antes de usá-lo na comparação
             if (!isNaN(index) && index > maxIndex) { 
                  maxIndex = index;
             }
         });
         
+        // Se nenhum índice válido foi encontrado, e há seções, retorna o número de seções como fallback.
+        // Senão, retorna o próximo.
         return maxIndex + 1;
     }
     
@@ -443,8 +445,12 @@
     function adicionarNovaCultura(doencaIndex) {
         const culturasContainer = document.getElementById(`culturas-container-${doencaIndex}`);
         const newIndex = getNextIndex(culturasContainer, '.cultura-section');
+        
+        // CORREÇÃO: Garante que o índice é numérico para exibição (mesmo que newIndex seja 0)
+        const culturaDisplayIndex = isNaN(newIndex) ? 1 : newIndex + 1;
+        
         const novaCulturaTemplate = {
-            "Cultura": `Nova Cultura ${newIndex + 1}`,
+            "Cultura": `Nova Cultura ${culturaDisplayIndex}`,
             "PesoImpacto": 0,
             "DadosPatogenosAssociados": [],
             "Sintomas": [],
@@ -462,8 +468,12 @@
     function adicionarNovoPatogeno(doencaIndex, culturaIndex) {
         const patogenosContainer = document.getElementById(`patogenos-container-${doencaIndex}-${culturaIndex}`);
         const newIndex = getNextIndex(patogenosContainer, '.patogeno-section');
+        
+        // CORREÇÃO: Garante que o índice é numérico para exibição, resolvendo o NaN.
+        const patogenoDisplayIndex = isNaN(newIndex) ? 1 : newIndex + 1;
+        
         const novoPatogenoTemplate = {
-            "NomePatogeno": `Novo Patógeno ${newIndex + 1}`,
+            "NomePatogeno": `Novo Patógeno ${patogenoDisplayIndex}`,
             "Sinonimos": [],
             "TipoPatogeno": "Fungo",
             "Peso": 0,
@@ -473,7 +483,7 @@
             "MicrorganimosAgonistas": []
         };
         
-        // CORREÇÃO: Passando o newIndex para gerarPatogenoHtml (último parâmetro)
+        // O quarto parâmetro (newIndex) é o data-index do novo Patógeno.
         const html = gerarPatogenoHtml(novoPatogenoTemplate, doencaIndex, culturaIndex, newIndex); 
         patogenosContainer.insertAdjacentHTML('beforeend', html);
         
