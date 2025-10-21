@@ -78,7 +78,7 @@
 
     <div class="io-section">
         <h2>Passo 1: Carregar/Salvar Arquivo JSON</h2>
-       
+        
         <div class="form-group">
             <label for="json-file-input">Carregar JSON (Array de Doenças):</label>
             <input type="file" id="json-file-input" accept=".json">
@@ -320,7 +320,7 @@
         // Não há necessidade de initializeCollapsibles()
     }
 
-    // --- DATA COLLECTION (mantida) ---
+    // --- DATA COLLECTION (Corrigida) ---
 
     function coletarDadosDoFormulario() {
         const newDataArray = [];
@@ -341,37 +341,61 @@
             doencaDiv.querySelector(`#culturas-container-${indexDoenca}`).querySelectorAll('.cultura-section').forEach((culturaDiv, indexCultura) => {
                 const novaCultura = {};
 
+                // Funcao auxiliar para pegar o valor do campo (evita o erro 'null')
+                const getElementValue = (selector, container = document) => {
+                    const element = container.querySelector(selector);
+                    return element ? element.value : '';
+                };
+
+                // Funcao auxiliar para pegar o valor de textarea e transformar em array de strings
+                const getTextareaArray = (selector) => {
+                    const value = getElementValue(selector);
+                    return value.split('\n').filter(s => s.trim() !== '');
+                };
+
+
                 culturaDiv.querySelectorAll('input[data-cultura-field]').forEach(input => {
                     const key = input.getAttribute('data-cultura-field');
                     novaCultura[key] = input.type === 'number' ? parseFloat(input.value) : input.value;
                 });
 
-                novaCultura.Sintomas = document.getElementById(`cultura-${indexDoenca}-${indexCultura}-sintomas`).value.split('\n').filter(s => s.trim() !== '');
-                novaCultura.CondicoesFavoraveis = document.getElementById(`cultura-${indexDoenca}-${indexCultura}-condicoes`).value.split('\n').filter(s => s.trim() !== '');
-                novaCultura.MicrorganimosAgravantes = document.getElementById(`cultura-${indexDoenca}-${indexCultura}-agravantes`).value.split('\n').filter(s => s.trim() !== '');
+                // Coleta de Arrays da Cultura usando getElementValue local
+                novaCultura.Sintomas = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-sintomas`);
+                novaCultura.CondicoesFavoraveis = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-condicoes`);
+                novaCultura.MicrorganimosAgravantes = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-agravantes`);
                 
+                // Coleta de Biocontroladores da Doença
                 novaCultura.BiocontroladoresDoenca = [{
-                    ComercialDoenca: document.getElementById(`doenca-${indexDoenca}-${indexCultura}-comerciais`).value.split('\n').filter(s => s.trim() !== ''),
-                    ConservativoDoenca: document.getElementById(`doenca-${indexDoenca}-${indexCultura}-conservativos`).value.split('\n').filter(s => s.trim() !== ''),
-                    IndiceBiocontroleAssociado: document.getElementById(`doenca-${indexDoenca}-${indexCultura}-indices`).value.split('\n').filter(s => s.trim() !== ''),
+                    ComercialDoenca: getTextareaArray(`#doenca-${indexDoenca}-${indexCultura}-comerciais`),
+                    ConservativoDoenca: getTextareaArray(`#doenca-${indexDoenca}-${indexCultura}-conservativos`),
+                    IndiceBiocontroleAssociado: getTextareaArray(`#doenca-${indexDoenca}-${indexCultura}-indices`),
                 }];
 
                 novaCultura.DadosPatogenosAssociados = [];
                 culturaDiv.querySelector(`#patogenos-container-${indexDoenca}-${indexCultura}`).querySelectorAll('.patogeno-section').forEach((patogenoDiv, indexPatogeno) => {
                     const novoPatogeno = {};
                     
+                    // Funcao auxiliar para buscar dentro da PatogenoDiv
+                    const getPatogenoTextareaArray = (suffix) => {
+                        const element = patogenoDiv.querySelector(`[id$="${suffix}"]`); // Busca local e por sufixo de ID
+                        const value = element ? element.value : '';
+                        return value.split('\n').filter(s => s.trim() !== '');
+                    };
+
                     patogenoDiv.querySelectorAll('input[data-patogeno-field]').forEach(input => {
                         const key = input.getAttribute('data-patogeno-field');
                         novoPatogeno[key] = input.type === 'number' ? parseFloat(input.value) : input.value;
                     });
                     
-                    novoPatogeno.Sinonimos = document.getElementById(`pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-sinonimos`).value.split('\n').filter(s => s.trim() !== '');
-                    novoPatogeno.MicrorganimosAgonistas = document.getElementById(`pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-agonistas`).value.split('\n').filter(s => s.trim() !== '');
+                    // CORREÇÃO APLICADA AQUI (usando getPatogenoTextareaArray)
+                    // Anteriormente, falhava se os índices dinâmicos estivessem desalinhados.
+                    novoPatogeno.Sinonimos = getPatogenoTextareaArray('-sinonimos');
+                    novoPatogeno.MicrorganimosAgonistas = getPatogenoTextareaArray('-agonistas');
 
                     novoPatogeno.BiocontroladoresPatogenos = [{
-                        ComerciaisEspecificos: document.getElementById(`pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-comerciais`).value.split('\n').filter(s => s.trim() !== ''),
-                        ConservativosEspecificos: document.getElementById(`pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-conservativos`).value.split('\n').filter(s => s.trim() !== ''),
-                        IndiceAssociado: document.getElementById(`pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-indices`).value.split('\n').filter(s => s.trim() !== ''),
+                        ComerciaisEspecificos: getPatogenoTextareaArray('-comerciais'),
+                        ConservativosEspecificos: getPatogenoTextareaArray('-conservativos'),
+                        IndiceAssociado: getPatogenoTextareaArray('-indices'),
                     }];
                     
                     novaCultura.DadosPatogenosAssociados.push(novoPatogeno);
@@ -449,7 +473,7 @@
             "MicrorganimosAgonistas": []
         };
         
-        const html = gerarPatogenoHtml(novoPatogenoTemplate, doencaIndex, culturaIndex);
+        const html = gerarPatogenoHtml(novoPatogenoTemplate, doencaIndex, culturaIndex, newIndex); // Adicionei newIndex aqui para correção completa
         patogenosContainer.insertAdjacentHTML('beforeend', html);
         
         alert(`Novo Patógeno adicionado à Cultura ${culturaIndex + 1}.`);
