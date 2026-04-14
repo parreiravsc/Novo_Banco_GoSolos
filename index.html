@@ -1,243 +1,256 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Patógenos JSON</title>
+    <title>Gerenciador GoSolos - Patógenos e Doenças</title>
     <style>
         :root {
-            --bg: #f4f7f6;
+            --bg: #f0f2f5;
             --card-bg: #ffffff;
             --primary: #2c3e50;
-            --accent: #3498db;
-            --danger: #e74c3c;
-            --success: #27ae60;
-            --border: #dcdde1;
-            --label-patho: #8e44ad;
-            --label-bio: #16a085;
+            --accent-editor1: #8e44ad; /* Roxo para Patógenos */
+            --accent-editor2: #ff8c00; /* Laranja para Doenças */
+            --success: #28a745;
+            --danger: #dc3545;
+            --border: #ccc;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--primary);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
+
+        /* Navegação por Abas */
+        .nav-tabs { display: flex; gap: 5px; max-width: 1200px; margin: 0 auto; }
+        .tab-button {
+            padding: 12px 25px; border: none; border-radius: 8px 8px 0 0;
+            cursor: pointer; font-weight: bold; background: #d1d8e0; color: #4b6584; transition: 0.3s;
         }
+        .tab-button.active { background: var(--card-bg); box-shadow: 0 -3px 10px rgba(0,0,0,0.1); }
+        .tab-button.active.btn-ed1 { color: var(--accent-editor1); border-top: 4px solid var(--accent-editor1); }
+        .tab-button.active.btn-ed2 { color: var(--accent-editor2); border-top: 4px solid var(--accent-editor2); }
 
         .container {
-            width: 100%;
-            max-width: 900px;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 1200px; margin: 0 auto; background: var(--card-bg);
+            padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
-        h1 { text-align: center; color: var(--primary); margin-bottom: 30px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--bg);
+        /* Estilos Comuns */
+        .section { margin-bottom: 20px; padding: 15px; border-radius: 8px; border: 1px solid var(--border); position: relative; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="date"], input[type="number"], textarea {
+            width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box;
         }
+        textarea { min-height: 60px; font-family: monospace; resize: vertical; }
+        button { padding: 10px 15px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; margin-right: 5px; color: white; }
+        
+        .btn-add { background-color: var(--primary); }
+        .btn-save { background-color: var(--success); }
+        .btn-remove { background-color: var(--danger); position: absolute; top: 10px; right: 10px; }
 
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: opacity 0.2s;
-        }
+        /* Estilos Específicos Editor 2 */
+        .doenca-section { border: 2px solid var(--accent-editor2); background: #fffaf5; }
+        .cultura-section { border: 2px solid #28a745; background: #f6fff6; margin-left: 20px; }
+        .patogeno-section { border: 1px solid #ffc107; background: #fffdf5; margin-left: 40px; }
 
-        .btn-load { background-color: var(--accent); color: white; }
-        .btn-save { background-color: var(--success); color: white; }
-        .btn-add { background-color: var(--primary); color: white; font-size: 12px; margin-top: 5px; }
-        .btn-remove { background-color: var(--danger); color: white; padding: 2px 8px; margin-left: 5px; }
-
-        .section {
-            margin-bottom: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 5px solid var(--border);
-        }
-
-        .sec-patogeno { border-left-color: var(--label-patho); background: #f9f4fc; }
-        .sec-biocontrol { border-left-color: var(--label-bio); background: #f0f9f7; }
-
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; color: #555; }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        .list-container {
-            background: rgba(255,255,255,0.6);
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-
-        .list-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        .list-item input { margin-bottom: 0; flex-grow: 1; }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        #fileInput { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Editor de Dados Fitopatológicos</h1>
-
-    <div class="toolbar">
-        <button class="btn-load" onclick="document.getElementById('fileInput').click()">Carregar JSON</button>
-        <button class="btn-save" onclick="downloadJSON()">Baixar JSON Atualizado</button>
-        <input type="file" id="fileInput" accept=".json" onchange="loadFile(event)">
+    <div class="nav-tabs">
+        <button class="tab-button active btn-ed1" onclick="openTab(event, 'editor1')">Editor 1: Biocontroladores</button>
+        <button class="tab-button btn-ed2" onclick="openTab(event, 'editor2')">Editor 2: Risco de Doenças</button>
     </div>
 
-    <div id="editor-form">
-        <div class="section sec-patogeno">
-            <div class="grid-2">
-                <div>
-                    <label>Nome do Patógeno</label>
-                    <input type="text" id="NomePatogeno" placeholder="Ex: Fusarium oxysporum">
+    <div class="container">
+        
+        <div id="editor1" class="tab-content active">
+            <h2>Editor de Patógenos (Foco Biocontroladores)</h2>
+            <div class="section" style="border-left: 5px solid var(--accent-editor1);">
+                <div class="form-group">
+                    <label>Nome do Patógeno (Editor 1 gera objeto único)</label>
+                    <input type="text" id="e1_nome" placeholder="Ex: Fusarium oxysporum">
                 </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <input type="text" id="e1_tipo" placeholder="Fungo">
+                </div>
+                <label>Comerciais Específicos (Um por linha)</label>
+                <textarea id="e1_comerciais"></textarea>
+                <label>Conservativos Específicos (Um por linha)</label>
+                <textarea id="e1_conservativos"></textarea>
+                <button class="btn-save" onclick="salvarEditor1()">Baixar JSON Biocontrolador</button>
+            </div>
+        </div>
+
+        <div id="editor2" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Editor de Banco de Risco</h2>
                 <div>
-                    <label>Tipo de Patógeno</label>
-                    <input type="text" id="TipoPatogeno" placeholder="Ex: Fungo">
+                    <input type="file" id="fileInput2" style="display:none" onchange="handleFileLoad2(event)">
+                    <button class="btn-add" onclick="document.getElementById('fileInput2').click()">Carregar JSON</button>
+                    <button class="btn-save" onclick="salvarEditor2()">Salvar JSON Doenças</button>
                 </div>
             </div>
 
-            <label>Sinônimos</label>
-            <div id="Sinonimos-list" class="list-container"></div>
-            <button class="btn-add" onclick="addItem('Sinonimos-list')">+ Adicionar Sinônimo</button>
+            <div id="doencas-container">
+                </div>
+            <button class="btn-add" style="background: var(--accent-editor2);" onclick="adicionarDoenca()">+ Adicionar Nova Doença</button>
         </div>
 
-        <div class="section">
-            <label>Microrganismos Agonistas</label>
-            <div id="MicrorganimosAgonistas-list" class="list-container"></div>
-            <button class="btn-add" onclick="addItem('MicrorganimosAgonistas-list')">+ Adicionar Agonista</button>
-        </div>
-
-        <div class="section sec-biocontrol">
-            <h3>Biocontroladores Patógenos</h3>
-            <div class="grid-2">
-                <div>
-                    <label>Comerciais Específicos</label>
-                    <div id="ComerciaisEspecificos-list" class="list-container"></div>
-                    <button class="btn-add" onclick="addItem('ComerciaisEspecificos-list')">+ Novo Comercial</button>
-                </div>
-                <div>
-                    <label>Conservativos Específicos</label>
-                    <div id="ConservativosEspecificos-list" class="list-container"></div>
-                    <button class="btn-add" onclick="addItem('ConservativosEspecificos-list')">+ Novo Conservativo</button>
-                </div>
-            </div>
-        </div>
     </div>
-</div>
 
-<script>
-    // Função para adicionar um campo de input na lista
-    function addItem(containerId, value = "") {
-        const container = document.getElementById(containerId);
-        const div = document.createElement('div');
-        div.className = 'list-item';
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = value;
-        input.className = 'list-input';
-
-        const btnDel = document.createElement('button');
-        btnDel.innerHTML = '&times;';
-        btnDel.className = 'btn-remove';
-        btnDel.onclick = () => div.remove();
-
-        div.appendChild(input);
-        div.appendChild(btnDel);
-        container.appendChild(div);
-    }
-
-    // Carregar arquivo JSON
-    function loadFile(event) {
-        const reader = new FileReader();
-        reader.onload = function() {
-            const data = JSON.parse(reader.result);
-            populateForm(data);
-        };
-        reader.readAsText(event.target.files[0]);
-    }
-
-    // Preencher o formulário com dados do JSON
-    function populateForm(data) {
-        document.getElementById('NomePatogeno').value = data.NomePatogeno || "";
-        document.getElementById('TipoPatogeno').value = data.TipoPatogeno || "";
-        
-        // Limpar listas antes de popular
-        const lists = ['Sinonimos-list', 'MicrorganimosAgonistas-list', 'ComerciaisEspecificos-list', 'ConservativosEspecificos-list'];
-        lists.forEach(id => document.getElementById(id).innerHTML = "");
-
-        if(data.Sinonimos) data.Sinonimos.forEach(v => addItem('Sinonimos-list', v));
-        if(data.MicrorganimosAgonistas) data.MicrorganimosAgonistas.forEach(v => addItem('MicrorganimosAgonistas-list', v));
-
-        if(data.BiocontroladoresPatogenos && data.BiocontroladoresPatogenos[0]) {
-            const bio = data.BiocontroladoresPatogenos[0];
-            if(bio.ComerciaisEspecificos) bio.ComerciaisEspecificos.forEach(v => addItem('ComerciaisEspecificos-list', v));
-            if(bio.ConservativosEspecificos) bio.ConservativosEspecificos.forEach(v => addItem('ConservativosEspecificos-list', v));
+    <script>
+        // --- NAVEGAÇÃO ---
+        function openTab(evt, tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
         }
-    }
 
-    // Coletar dados e gerar arquivo para baixar
-    function downloadJSON() {
-        const getListValues = (id) => {
-            return Array.from(document.querySelectorAll(`#${id} .list-input`))
-                        .map(input => input.value)
-                        .filter(val => val.trim() !== "");
-        };
+        // --- LÓGICA EDITOR 1 (SIMPLIFICADA) ---
+        function salvarEditor1() {
+            const lines = (id) => document.getElementById(id).value.split('\n').filter(l => l.trim() !== "");
+            const data = {
+                NomePatogeno: document.getElementById('e1_nome').value,
+                TipoPatogeno: document.getElementById('e1_tipo').value,
+                BiocontroladoresPatogenos: [{
+                    ComerciaisEspecificos: lines('e1_comerciais'),
+                    ConservativosEspecificos: lines('e1_conservativos')
+                }]
+            };
+            download(data, "biocontrolador.json");
+        }
 
-        const jsonOutput = {
-            "NomePatogeno": document.getElementById('NomePatogeno').value,
-            "TipoPatogeno": document.getElementById('TipoPatogeno').value,
-            "Sinonimos": getListValues('Sinonimos-list'),
-            "MicrorganimosAgonistas": getListValues('MicrorganimosAgonistas-list'),
-            "BiocontroladoresPatogenos": [
-                {
-                    "ComerciaisEspecificos": getListValues('ComerciaisEspecificos-list'),
-                    "ConservativosEspecificos": getListValues('ConservativosEspecificos-list')
-                }
-            ]
-        };
+        // --- LÓGICA EDITOR 2 (Ajustada para a nova estrutura) ---
+        let doencasData = [];
 
-        const blob = new Blob([JSON.stringify(jsonOutput, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "dados_patogeno.json";
-        a.click();
-    }
-</script>
+        function renderizarEditor2() {
+            const container = document.getElementById('doencas-container');
+            container.innerHTML = '';
 
+            doencasData.forEach((doenca, dIdx) => {
+                let culturasHtml = '';
+                doenca.CulturasAfetadas.forEach((cultura, cIdx) => {
+                    let patogenosHtml = '';
+                    cultura.DadosPatogenosAssociados.forEach((pat, pIdx) => {
+                        patogenosHtml += `
+                            <div class="patogeno-section">
+                                <button class="btn-remove" onclick="removerItem(${dIdx}, ${cIdx}, ${pIdx})">×</button>
+                                <strong>Patógeno:</strong>
+                                <div class="form-group">
+                                    <input type="text" value="${pat.NomePatogeno}" onchange="updatePat(${dIdx},${cIdx},${pIdx},'NomePatogeno',this.value)" placeholder="Nome">
+                                    <input type="number" step="0.1" value="${pat.Peso}" onchange="updatePat(${dIdx},${cIdx},${pIdx},'Peso',this.value)" style="width: 80px" placeholder="Peso">
+                                    <input type="text" value="${pat.TipoPatogeno}" onchange="updatePat(${dIdx},${cIdx},${pIdx},'TipoPatogeno',this.value)" placeholder="Tipo">
+                                </div>
+                                <label>Sinônimos (Linha por linha)</label>
+                                <textarea onchange="updatePatArray(${dIdx},${cIdx},${pIdx},'Sinonimos',this.value)">${pat.Sinonimos.join('\n')}</textarea>
+                                <label>Agonistas</label>
+                                <textarea onchange="updatePatArray(${dIdx},${cIdx},${pIdx},'MicrorganimosAgonistas',this.value)">${pat.MicrorganimosAgonistas.join('\n')}</textarea>
+                                <label>Índice Associado</label>
+                                <textarea onchange="updatePatArray(${dIdx},${cIdx},${pIdx},'IndiceAssociado',this.value)">${pat.IndiceAssociado.join('\n')}</textarea>
+                            </div>`;
+                    });
+
+                    culturasHtml += `
+                        <div class="cultura-section">
+                            <button class="btn-remove" onclick="removerItem(${dIdx}, ${cIdx})">×</button>
+                            <h4>Cultura: <input type="text" value="${cultura.Cultura}" onchange="doencasData[${dIdx}].CulturasAfetadas[${cIdx}].Cultura=this.value"></h4>
+                            <label>Sintomas</label>
+                            <textarea onchange="updateCultArray(${dIdx},${cIdx},'Sintomas',this.value)">${cultura.Sintomas.join('\n')}</textarea>
+                            <div id="pats-at-${dIdx}-${cIdx}">${patogenosHtml}</div>
+                            <button class="btn-add" style="background:#3f79ff" onclick="adicionarPat(${dIdx}, ${cIdx})">+ Patógeno</button>
+                        </div>`;
+                });
+
+                container.innerHTML += `
+                    <div class="section doenca-section">
+                        <button class="btn-remove" onclick="removerItem(${dIdx})">×</button>
+                        <h3>Doença: <input type="text" value="${doenca.NomeDoenca}" onchange="doencasData[${dIdx}].NomeDoenca=this.value"></h3>
+                        <div class="form-group">
+                             Data: <input type="text" value="${doenca.DataCriacao}" style="width:120px" onchange="doencasData[${dIdx}].DataCriacao=this.value">
+                             Versão: <input type="text" value="${doenca.Versao}" style="width:80px" onchange="doencasData[${dIdx}].Versao=this.value">
+                        </div>
+                        ${culturasHtml}
+                        <button class="btn-add" style="background:var(--success)" onclick="adicionarCultura(${dIdx})">+ Cultura</button>
+                    </div>`;
+            });
+        }
+
+        // Funções de atualização de dados
+        function updatePat(d, c, p, field, val) { 
+            if(field === 'Peso') val = parseFloat(val);
+            doencasData[d].CulturasAfetadas[c].DadosPatogenosAssociados[p][field] = val; 
+        }
+        function updatePatArray(d, c, p, field, val) { 
+            doencasData[d].CulturasAfetadas[c].DadosPatogenosAssociados[p][field] = val.split('\n').filter(x => x.trim() !== ""); 
+        }
+        function updateCultArray(d, c, field, val) {
+            doencasData[d].CulturasAfetadas[c][field] = val.split('\n').filter(x => x.trim() !== "");
+        }
+
+        // Adição de itens
+        function adicionarDoenca() {
+            doencasData.push({
+                NomeDoenca: "Nova Doença", DataCriacao: new Date().toLocaleDateString('pt-BR'),
+                DataAtualizacao: new Date().toLocaleDateString('pt-BR'), Versao: "1.0",
+                CulturasAfetadas: []
+            });
+            renderizarEditor2();
+        }
+
+        function adicionarCultura(dIdx) {
+            doencasData[dIdx].CulturasAfetadas.push({
+                Cultura: "", PesoImpacto: 0, Sintomas: [], CondicoesFavoraveis: [],
+                MicrorganimosAgravantes: [], IndiceBiocontroleAssociado: [],
+                DadosPatogenosAssociados: []
+            });
+            renderizarEditor2();
+        }
+
+        function adicionarPat(dIdx, cIdx) {
+            doencasData[dIdx].CulturasAfetadas[cIdx].DadosPatogenosAssociados.push({
+                NomePatogeno: "", TipoPatogeno: "", Peso: 0,
+                Sinonimos: [], MicrorganimosAgonistas: [], IndiceAssociado: []
+            });
+            renderizarEditor2();
+        }
+
+        function removerItem(d, c, p) {
+            if(!confirm("Remover?")) return;
+            if(p !== undefined) doencasData[d].CulturasAfetadas[c].DadosPatogenosAssociados.splice(p, 1);
+            else if(c !== undefined) doencasData[d].CulturasAfetadas.splice(c, 1);
+            else doencasData.splice(d, 1);
+            renderizarEditor2();
+        }
+
+        function handleFileLoad2(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const json = JSON.parse(e.target.result);
+                doencasData = Array.isArray(json) ? json : [json];
+                renderizarEditor2();
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        function salvarEditor2() {
+            download(doencasData, "banco_doencas.json");
+        }
+
+        function download(obj, filename) {
+            const blob = new Blob([JSON.stringify(obj, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
+
+        // Iniciar com uma doenca vazia
+        window.onload = adicionarDoenca;
+    </script>
 </body>
 </html>
