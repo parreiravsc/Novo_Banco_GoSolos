@@ -37,11 +37,14 @@
 
         .section { margin-bottom: 25px; padding: 20px; border-radius: 8px; border: 1px solid var(--border); position: relative; }
         .form-group { margin-bottom: 12px; }
-        .grid-params { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        
+        /* Grade para os 4 campos da cultura */
+        .grid-params { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px; }
+        .grid-pat { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; }
         
         label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 0.85em; color: #444; }
         input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
-        textarea { min-height: 70px; font-family: sans-serif; font-size: 13px; }
+        textarea { min-height: 80px; font-family: sans-serif; font-size: 13px; resize: vertical; }
         
         button { padding: 8px 15px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; color: white; }
         .btn-add { background-color: var(--primary); }
@@ -51,7 +54,7 @@
 
         .patogeno-full-card { border-left: 6px solid var(--accent-ed1); background: #faf8ff; }
         .doenca-section { border: 2px solid var(--accent-ed2); background: #fffaf5; }
-        .cultura-section { border: 2px solid var(--success); background: #f6fff6; margin-left: 20px; margin-top: 15px; }
+        .cultura-section { border: 2px solid var(--success); background: #f6fff6; margin-left: 20px; margin-top: 15px; padding: 25px; }
         .patogeno-min-card { border: 1px solid #ffc107; background: #fffdf5; margin-left: 40px; margin-top: 10px; padding: 15px; }
         
         h3, h4, h5 { margin-top: 0; margin-bottom: 10px; }
@@ -76,7 +79,7 @@
                 </div>
             </div>
             <div id="ed1-container"></div>
-            <button class="btn-add" style="background: var(--accent-ed1);" onclick="adicionarPatCompleto()">+ Novo Patógeno                                         </button>
+            <button class="btn-add" style="background: var(--accent-ed1);" onclick="adicionarPatCompleto()">+ Novo Patógeno</button>
         </div>
 
         <div id="editor2" class="tab-content">
@@ -95,7 +98,7 @@
     </div>
 
     <script>
-        // --- GERAL ---
+        // --- FUNÇÕES GERAIS ---
         function openTab(evt, tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
@@ -124,8 +127,8 @@
                             <div class="form-group"><label>Tipo</label><input type="text" value="${pat.TipoPatogeno}" onchange="bancoPatogenos[${idx}].TipoPatogeno=this.value"></div>
                         </div>
                         <div class="grid-params">
-                            <div class="form-group"><label>Comerciais Específicos</label><textarea onchange="updateEd1Array(${idx}, 'ComerciaisEspecificos', this.value)">${(bio.ComerciaisEspecificos || []).join('\n')}</textarea></div>
-                            <div class="form-group"><label>Conservativos Específicos</label><textarea onchange="updateEd1Array(${idx}, 'ConservativosEspecificos', this.value)">${(bio.ConservativosEspecificos || []).join('\n')}</textarea></div>
+                            <div class="form-group"><label>Comerciais Específicos (linha por linha)</label><textarea onchange="updateEd1Array(${idx}, 'ComerciaisEspecificos', this.value)">${(bio.ComerciaisEspecificos || []).join('\n')}</textarea></div>
+                            <div class="form-group"><label>Conservativos Específicos (linha por linha)</label><textarea onchange="updateEd1Array(${idx}, 'ConservativosEspecificos', this.value)">${(bio.ConservativosEspecificos || []).join('\n')}</textarea></div>
                         </div>
                     </div>`;
             });
@@ -151,12 +154,12 @@
                             <div class="patogeno-min-card">
                                 <button class="btn-remove" onclick="removerEd2(${dIdx}, ${cIdx}, ${pIdx})">×</button>
                                 <h5>Patógeno Associado</h5>
-                                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
+                                <div class="grid-pat">
                                     <div class="form-group"><label>Nome</label><input type="text" value="${pat.NomePatogeno}" onchange="doencasData[${dIdx}].CulturasAfetadas[${cIdx}].DadosPatogenosAssociados[${pIdx}].NomePatogeno=this.value"></div>
                                     <div class="form-group"><label>Peso</label><input type="number" step="0.1" value="${pat.Peso}" onchange="doencasData[${dIdx}].CulturasAfetadas[${cIdx}].DadosPatogenosAssociados[${pIdx}].Peso=parseFloat(this.value)"></div>
                                     <div class="form-group"><label>Tipo</label><input type="text" value="${pat.TipoPatogeno}" onchange="doencasData[${dIdx}].CulturasAfetadas[${cIdx}].DadosPatogenosAssociados[${pIdx}].TipoPatogeno=this.value"></div>
                                 </div>
-                                <label>Sinônimos</label>
+                                <label>Sinônimos (um por linha)</label>
                                 <textarea onchange="updateArrayEd2(${dIdx},${cIdx},${pIdx},'Sinonimos',this.value)">${(pat.Sinonimos || []).join('\n')}</textarea>
                             </div>`;
                     });
@@ -164,27 +167,27 @@
                     culturasHtml += `
                         <div class="cultura-section">
                             <button class="btn-remove" onclick="removerEd2(${dIdx}, ${cIdx})">Remover Cultura</button>
-                            <h4>Cultura: <input type="text" value="${cultura.Cultura}" onchange="doencasData[${dIdx}].CulturasAfetadas[${cIdx}].Cultura=this.value" style="width: auto;"></h4>
+                            <h4>Cultura: <input type="text" value="${cultura.Cultura}" onchange="doencasData[${dIdx}].CulturasAfetadas[${cIdx}].Cultura=this.value" style="width: 300px; padding: 5px;"></h4>
                             
                             <div class="grid-params">
-                                <div class="form-group"><label>Sintomas</label><textarea onchange="updateCultArray(${dIdx},${cIdx},'Sintomas',this.value)">${(cultura.Sintomas || []).join('\n')}</textarea></div>
+                                <div class="form-group"><label>Sintomas da Doença</label><textarea onchange="updateCultArray(${dIdx},${cIdx},'Sintomas',this.value)">${(cultura.Sintomas || []).join('\n')}</textarea></div>
                                 <div class="form-group"><label>Condições Favoráveis</label><textarea onchange="updateCultArray(${dIdx},${cIdx},'CondicoesFavoraveis',this.value)">${(cultura.CondicoesFavoraveis || []).join('\n')}</textarea></div>
-                                <div class="form-group"><label>Agravantes</label><textarea onchange="updateCultArray(${dIdx},${cIdx},'MicrorganimosAgravantes',this.value)">${(cultura.MicrorganimosAgravantes || []).join('\n')}</textarea></div>
+                                <div class="form-group"><label>Microrganismos Agravantes</label><textarea onchange="updateCultArray(${dIdx},${cIdx},'MicrorganimosAgravantes',this.value)">${(cultura.MicrorganimosAgravantes || []).join('\n')}</textarea></div>
                                 <div class="form-group"><label>Índice Biocontrole Associado</label><textarea onchange="updateCultArray(${dIdx},${cIdx},'IndiceBiocontroleAssociado',this.value)">${(cultura.IndiceBiocontroleAssociado || []).join('\n')}</textarea></div>
                             </div>
 
                             <div id="pats-at-${dIdx}-${cIdx}">${patogenosHtml}</div>
-                            <button class="btn-add" style="background:#3f79ff; margin-top:10px;" onclick="adicionarEd2Pat(${dIdx}, ${cIdx})">+ Patógeno Associado</button>
+                            <button class="btn-add" style="background:#3f79ff; margin-top:10px;" onclick="adicionarEd2Pat(${dIdx}, ${cIdx})">+ Adicionar Patógeno Associado</button>
                         </div>`;
                 });
 
                 container.innerHTML += `
                     <div class="section doenca-section">
                         <button class="btn-remove" onclick="removerEd2(${dIdx})">Remover Doença</button>
-                        <h3>Doença: <input type="text" value="${doenca.NomeDoenca}" onchange="doencasData[${dIdx}].NomeDoenca=this.value" style="width: 300px; font-weight:bold;"></h3>
-                        <div class="form-group">Data: <input type="text" value="${doenca.DataCriacao}" style="width:120px" onchange="doencasData[${dIdx}].DataCriacao=this.value"></div>
+                        <h3>Doença: <input type="text" value="${doenca.NomeDoenca}" onchange="doencasData[${dIdx}].NomeDoenca=this.value" style="width: 350px; font-weight:bold; font-size: 1.1em;"></h3>
+                        <div class="form-group">Data de Criação: <input type="text" value="${doenca.DataCriacao}" style="width:120px" onchange="doencasData[${dIdx}].DataCriacao=this.value"></div>
                         ${culturasHtml}
-                        <button class="btn-add" style="background:var(--success); margin-top:10px;" onclick="adicionarCultura(${dIdx})">+ Adicionar Cultura</button>
+                        <button class="btn-add" style="background:var(--success); margin-top:10px;" onclick="adicionarCultura(${dIdx})">+ Adicionar Cultura Afetada</button>
                     </div>`;
             });
         }
@@ -212,7 +215,7 @@
         }
 
         function removerEd2(d, c, p) {
-            if(!confirm("Remover item?")) return;
+            if(!confirm("Remover este item?")) return;
             if(p !== undefined) doencasData[d].CulturasAfetadas[c].DadosPatogenosAssociados.splice(p, 1);
             else if(c !== undefined) doencasData[d].CulturasAfetadas.splice(c, 1);
             else doencasData.splice(d, 1);
