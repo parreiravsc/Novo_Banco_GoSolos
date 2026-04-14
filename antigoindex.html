@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo banco de risco de doenças - GoSolos</title>
+    <style>
+        /* Estilos (Base) */
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        h1, h2, h3, h4 { color: #333; padding-bottom: 5px; margin-top: 20px; }
+        h1 { border-bottom: 2px solid #ccc; }
+        
+        /* Estilos para File I/O */
+        .io-section { border: 1px dashed #007bff; padding: 15px; margin-bottom: 20px; border-radius: 6px; background-color: #e9f7ff; }
+
+        /* Estilos de Formulário */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="date"], input[type="number"], textarea, input[type="file"] {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        textarea { resize: vertical; min-height: 80px; font-family: monospace; }
+        
+        /* Botões Padrão */
+        button { padding: 10px 20px; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; margin-right: 10px; }
+        .btn-load { background-color: #007bff; }
+        .btn-save { background-color: #28a745; }
+        .btn-add-doenca { background-color: #ff8c00; }
+        .btn-add-cultura, .btn-add-patogeno { background-color: #3f79ff; }
+        .btn-remove { background-color: #dc3545; position: absolute; top: 10px; right: 10px;}
+
+        button:hover { opacity: 0.8; }
+
+        /* --- Estilos para Doenças, Culturas e Patógenos --- */
+        .doenca-section { 
+            border: 2px solid #ff8c00; 
+            background-color: #fff0e6; 
+            margin-bottom: 30px; 
+            padding: 15px; 
+            border-radius: 8px; 
+            position: relative; 
+            padding-top: 35px;
+        }
+        .cultura-section { 
+            border: 2px solid #28a745; 
+            background-color: #e6ffe6; 
+            margin-top: 15px; 
+            margin-bottom: 15px; 
+            padding: 15px; 
+            border-radius: 6px; 
+            position: relative; 
+            padding-top: 35px;
+        }
+        .patogeno-section { 
+            border: 1px solid #ffc107; 
+            background-color: #fff8e6; 
+            margin-top: 10px; 
+            margin-bottom: 10px; 
+            padding: 10px; 
+            border-radius: 4px; 
+            position: relative; 
+            padding-top: 30px;
+        }
+
+        /* Ajuste de títulos para o novo padding */
+        .doenca-section h2, .cultura-section h3, .patogeno-section h5 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Editor de Dados de Doenças</h1>
+    <hr>
+
+    <div class="io-section">
+        <h2>Passo 1: Carregar/Salvar Arquivo JSON</h2>
+        
+        <div class="form-group">
+            <label for="json-file-input">Carregar JSON (Array de Doenças):</label>
+            <input type="file" id="json-file-input" accept=".json">
+            <button class="btn-load" onclick="handleFileLoad()">Carregar Arquivo</button>
+        </div>
+        
+        <div class="form-group">
+            <button class="btn-save" onclick="salvarDados()">Salvar Todas as Alterações em Arquivo JSON</button>
+        </div>
+    </div>
+    
+    <div id="form-content" style="display:none;">
+        <h2>Passo 2: Editar e Adicionar Doenças</h2>
+        
+        <div id="doencas-container">
+            </div>
+        
+        <button class="btn-add-doenca" onclick="adicionarNovaDoenca()">+ Adicionar Nova Doença</button>
+
+        <h3 style="margin-top: 40px;">Salvar Alterações</h3>
+        <button class="btn-save" onclick="salvarDados()">Salvar Todas as Alterações em Arquivo JSON</button>
+    </div>
+    
+</div>
+
+<script>
+    // Armazena o array de objetos de doença
+    let currentDataArray = [];
+    const formContent = document.getElementById('form-content');
+    const doencasContainer = document.getElementById('doencas-container');
+
+    // --- UTILS ---
+
+    function formatarDataParaInput(dataStr) {
+        if (!dataStr) return '';
+        const partes = dataStr.split('/');
+        return partes.length === 3 ? `${partes[2]}-${partes[1]}-${partes[0]}` : dataStr;
+    }
+    
+    function formatarDataParaJSON(dataStr) {
+        if (!dataStr) return '';
+        const partes = dataStr.split('-');
+        return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : dataStr;
+    }
+
+    // Renderiza um textarea para edição de arrays de strings
+    function renderArray(dataArray, label, idPrefix) {
+        const items = dataArray && dataArray.length > 0 ? dataArray.join('\n') : '';
+        return `
+            <div class="form-group">
+                <label for="${idPrefix}">${label} (Um item por linha):</label>
+                <textarea id="${idPrefix}" data-array-field="true">${items}</textarea>
+            </div>
+        `;
+    }
+    
+    // --- FILE I/O ---
+    
+    function handleFileLoad() {
+        const fileInput = document.getElementById('json-file-input');
+        const file = fileInput.files[0];
+
+        if (!file) { alert("Por favor, selecione um arquivo JSON."); return; }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const jsonText = e.target.result;
+                const parsedData = JSON.parse(jsonText);
+                
+                currentDataArray = Array.isArray(parsedData) ? parsedData : [parsedData];
+                
+                carregarDadosNoFormulario(currentDataArray);
+                formContent.style.display = 'block';
+            } catch (error) {
+                alert("Erro ao ler/analisar o arquivo JSON. Certifique-se de que é um ARRAY de objetos de doença. Detalhe: " + error.message);
+                console.error("Erro de parse:", error);
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    function salvarDados() {
+        if (currentDataArray.length === 0) {
+            alert("Nenhum dado carregado para salvar.");
+            return;
+        }
+        
+        const newDataArray = coletarDadosDoFormulario(); 
+        const fileName = 'doencas_atualizadas_' + new Date().toISOString().slice(0, 10) + '.json';
+        const jsonString = JSON.stringify(newDataArray, null, 2);
+        
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        alert(`Arquivo "${fileName}" salvo com sucesso! Contém ${newDataArray.length} doença(s).`);
+    }
+
+    // --- HTML GENERATION & LOGIC ---
+
+    // Gera o HTML de uma seção de Patógeno
+    function gerarPatogenoHtml(patogeno, indexDoenca, indexCultura, indexPatogeno) {
+        const biocontroles = patogeno.BiocontroladoresPatogenos && patogeno.BiocontroladoresPatogenos[0] ? patogeno.BiocontroladoresPatogenos[0] : {};
+        
+        return `
+            <div class="patogeno-section" data-index="${indexPatogeno}">
+                <h5>Patógeno ${indexPatogeno + 1}: ${patogeno.NomePatogeno || 'Novo Patógeno'}</h5>
+                <button class="btn-remove" onclick="removerElemento(this, 'patogeno-section')">Remover</button>
+
+                <div class="patogeno-content">
+                    <div class="form-group">
+                        <label>Nome do Patógeno:</label>
+                        <input type="text" data-patogeno-field="NomePatogeno" id="pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-nome" value="${patogeno.NomePatogeno || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo do Patógeno:</label>
+                        <input type="text" data-patogeno-field="TipoPatogeno" value="${patogeno.TipoPatogeno || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Peso do Patógeno:</label>
+                        <input type="number" step="0.1" data-patogeno-field="Peso" value="${patogeno.Peso || 0}">
+                    </div>
+
+                    <h6>Biocontroladores Específicos</h6>
+                    <div class="biocontrol-section">
+                        ${renderArray(patogeno.Sinonimos, 'Sinônimos', `pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-sinonimos`)}
+                        ${renderArray(biocontroles.ConservativosEspecificos, 'Conservativos Específicos', `pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-conservativos`)}
+                        ${renderArray(biocontroles.ComerciaisEspecificos, 'Comerciais Específicos', `pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-comerciais`)}
+                        ${renderArray(biocontroles.IndiceAssociado, 'Índices Associados', `pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-indices`)}
+                        ${renderArray(patogeno.MicrorganimosAgonistas, 'Microrganismos Agonistas', `pat-${indexDoenca}-${indexCultura}-${indexPatogeno}-agonistas`)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Gera o HTML de uma seção de Cultura
+    function gerarCulturaHtml(cultura, indexDoenca, indexCultura) {
+        const biocontroleDoenca = cultura.BiocontroladoresDoenca && cultura.BiocontroladoresDoenca[0] ? cultura.BiocontroladoresDoenca[0] : {};
+        
+        let patogenosHtml = '';
+        if (cultura.DadosPatogenosAssociados && Array.isArray(cultura.DadosPatogenosAssociados)) {
+            cultura.DadosPatogenosAssociados.forEach((patogeno, indexPatogeno) => {
+                patogenosHtml += gerarPatogenoHtml(patogeno, indexDoenca, indexCultura, indexPatogeno);
+            });
+        }
+        
+        return `
+            <div class="cultura-section" data-index="${indexCultura}" id="cultura-section-${indexDoenca}-${indexCultura}">
+                <h3>Cultura ${indexCultura + 1}: ${cultura.Cultura || 'Nova Cultura'}</h3>
+                <button class="btn-remove" onclick="removerElemento(this, 'cultura-section')">Remover Cultura</button>
+
+                <div class="cultura-content">
+                    <div class="form-group">
+                        <label for="cultura-${indexDoenca}-${indexCultura}-nome">Nome da Cultura:</label>
+                        <input type="text" id="cultura-${indexDoenca}-${indexCultura}-nome" data-cultura-field="Cultura" value="${cultura.Cultura || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="cultura-${indexDoenca}-${indexCultura}-peso">Peso de Impacto:</label>
+                        <input type="number" step="0.1" id="cultura-${indexDoenca}-${indexCultura}-peso" data-cultura-field="PesoImpacto" value="${cultura.PesoImpacto || 0}">
+                    </div>
+                    
+                    <h4>Patógenos Associados</h4>
+                    <div id="patogenos-container-${indexDoenca}-${indexCultura}">${patogenosHtml}</div>
+                    <button class="btn-add-patogeno" onclick="adicionarNovoPatogeno(${indexDoenca}, ${indexCultura})">+ Adicionar Novo Patógeno</button>
+                    
+                    <h4>Dados da Cultura (Arrays)</h4>
+                    ${renderArray(cultura.Sintomas, 'Sintomas', `cultura-${indexDoenca}-${indexCultura}-sintomas`)}
+                    ${renderArray(cultura.CondicoesFavoraveis, 'Condições Favoráveis', `cultura-${indexDoenca}-${indexCultura}-condicoes`)}
+                    ${renderArray(cultura.MicrorganimosAgravantes, 'Microrganismos Agravantes', `cultura-${indexDoenca}-${indexCultura}-agravantes`)}
+
+                    <h6>Biocontroladores da Doença (Geral)</h6>
+                    <div class="biocontrol-section">
+                        ${renderArray(biocontroleDoenca.ComercialDoenca, 'Comerciais da Doença', `doenca-${indexDoenca}-${indexCultura}-comerciais`)}
+                        ${renderArray(biocontroleDoenca.ConservativoDoenca, 'Conservativos da Doença', `doenca-${indexDoenca}-${indexCultura}-conservativos`)}
+                        ${renderArray(biocontroleDoenca.IndiceBiocontroleAssociado, 'Índices de Biocontrole Associados', `doenca-${indexDoenca}-${indexCultura}-indices`)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Gera o HTML de uma seção de Doença
+    function gerarDoencaHtml(doenca, indexDoenca) {
+        let culturasHtml = '';
+        if (doenca.CulturasAfetadas && Array.isArray(doenca.CulturasAfetadas)) {
+            doenca.CulturasAfetadas.forEach((cultura, indexCultura) => {
+                culturasHtml += gerarCulturaHtml(cultura, indexDoenca, indexCultura);
+            });
+        }
+        
+        return `
+            <div class="doenca-section" data-index="${indexDoenca}" id="doenca-section-${indexDoenca}">
+                <h2>Doença ${indexDoenca + 1}: ${doenca.NomeDoenca || 'Nova Doença'}</h2>
+                <button class="btn-remove" onclick="removerElemento(this, 'doenca-section')">Remover Doença</button>
+                
+                <div class="doenca-content">
+                    <h3>Informações Gerais</h3>
+                    <div class="form-group">
+                        <label for="doenca-${indexDoenca}-nome">Nome da Doença:</label>
+                        <input type="text" id="doenca-${indexDoenca}-nome" data-doenca-field="NomeDoenca" value="${doenca.NomeDoenca || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="doenca-${indexDoenca}-criacao">Data de Criação:</label>
+                        <input type="date" id="doenca-${indexDoenca}-criacao" data-doenca-field="DataCriacao" value="${formatarDataParaInput(doenca.DataCriacao || '')}">
+                    </div>
+                    <div class="form-group">
+                        <label for="doenca-${indexDoenca}-atualizacao">Data de Atualização:</label>
+                        <input type="date" id="doenca-${indexDoenca}-atualizacao" data-doenca-field="DataAtualizacao" value="${formatarDataParaInput(doenca.DataAtualizacao || '')}">
+                    </div>
+                    <div class="form-group">
+                        <label for="doenca-${indexDoenca}-versao">Versão:</label>
+                        <input type="text" id="doenca-${indexDoenca}-versao" data-doenca-field="Versao" value="${doenca.Versao || ''}">
+                    </div>
+
+                    <h2 style="border-bottom: 2px solid #007bff;">Culturas Afetadas</h2>
+                    <div id="culturas-container-${indexDoenca}">${culturasHtml}</div>
+                    <button class="btn-add-cultura" onclick="adicionarNovaCultura(${indexDoenca})">+ Adicionar Nova Cultura Afetada</button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Carrega o array de doenças no formulário
+    function carregarDadosNoFormulario(dataArray) {
+        doencasContainer.innerHTML = '';
+        dataArray.forEach((doenca, indexDoenca) => {
+            doencasContainer.innerHTML += gerarDoencaHtml(doenca, indexDoenca);
+        });
+    }
+
+    // --- DATA COLLECTION (CORRIGIDA - Robustez contra indices desalinhados) ---
+
+    function coletarDadosDoFormulario() {
+        const newDataArray = [];
+
+        document.querySelectorAll('.doenca-section').forEach((doencaDiv, indexDoenca) => {
+            const novaDoenca = {};
+
+            doencaDiv.querySelectorAll('input[data-doenca-field]').forEach(input => {
+                const key = input.getAttribute('data-doenca-field');
+                if (key.includes('Data')) {
+                    novaDoenca[key] = formatarDataParaJSON(input.value);
+                } else {
+                    novaDoenca[key] = input.value;
+                }
+            });
+
+            // Funcao auxiliar para pegar o valor de textarea em qualquer escopo
+            const getTextareaArray = (selector, container = document) => {
+                const element = container.querySelector(selector);
+                // ESSENCIAL: Retorna string vazia se for null para prevenir o TypeError
+                const value = element ? element.value : ''; 
+                return value.split('\n').filter(s => s.trim() !== '');
+            };
+
+            novaDoenca.CulturasAfetadas = [];
+            doencaDiv.querySelector(`#culturas-container-${indexDoenca}`).querySelectorAll('.cultura-section').forEach((culturaDiv, indexCultura) => {
+                const novaCultura = {};
+
+                culturaDiv.querySelectorAll('input[data-cultura-field]').forEach(input => {
+                    const key = input.getAttribute('data-cultura-field');
+                    novaCultura[key] = input.type === 'number' ? parseFloat(input.value) : input.value;
+                });
+
+                // Coleta de Arrays da Cultura
+                novaCultura.Sintomas = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-sintomas`);
+                novaCultura.CondicoesFavoraveis = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-condicoes`);
+                novaCultura.MicrorganimosAgravantes = getTextareaArray(`#cultura-${indexDoenca}-${indexCultura}-agravantes`);
+                
+                // Coleta de Biocontroladores da Doença
+                novaCultura.BiocontroladoresDoenca = [{
+                    ComercialDoenca: getTextareaArray(`#doenca-${indexDoenca}-${indexCultura}-comerciais`),
+                    ConservativoDoenca: getTextareaArray(`#doenca-${indexDoenca}-${indexCultura}-conservativos`),
+                    IndiceBiocontroleAssociado: getTextareaArray(`#doenca-${indexDoenca}-${indexCultura}-indices`),
+                }];
+
+                novaCultura.DadosPatogenosAssociados = [];
+                // Itera sobre as div's do patógeno
+                culturaDiv.querySelector(`#patogenos-container-${indexDoenca}-${indexCultura}`).querySelectorAll('.patogeno-section').forEach((patogenoDiv) => {
+                    const novoPatogeno = {};
+                    
+                    // Funcao auxiliar para buscar DENTRO da PatogenoDiv usando seletor de sufixo (CORREÇÃO DE ÍNDICE)
+                    const getPatogenoTextareaArray = (suffix) => {
+                        const element = patogenoDiv.querySelector(`[id$="${suffix}"]`); 
+                        const value = element ? element.value : '';
+                        return value.split('\n').filter(s => s.trim() !== '');
+                    };
+
+                    patogenoDiv.querySelectorAll('input[data-patogeno-field]').forEach(input => {
+                        const key = input.getAttribute('data-patogeno-field');
+                        novoPatogeno[key] = input.type === 'number' ? parseFloat(input.value) : input.value;
+                    });
+                    
+                    // CORREÇÃO APLICADA: Busca segura por sufixo de ID dentro do escopo do patogenoDiv
+                    novoPatogeno.Sinonimos = getPatogenoTextareaArray('-sinonimos');
+                    novoPatogeno.MicrorganimosAgonistas = getPatogenoTextareaArray('-agonistas');
+
+                    novoPatogeno.BiocontroladoresPatogenos = [{
+                        ComerciaisEspecificos: getPatogenoTextareaArray('-comerciais'),
+                        ConservativosEspecificos: getPatogenoTextareaArray('-conservativos'),
+                        IndiceAssociado: getPatogenoTextareaArray('-indices'),
+                    }];
+                    
+                    novaCultura.DadosPatogenosAssociados.push(novoPatogeno);
+                });
+
+                novaDoenca.CulturasAfetadas.push(novaCultura);
+            });
+
+            newDataArray.push(novaDoenca);
+        });
+        
+        currentDataArray = newDataArray;
+        return newDataArray;
+    }
+
+    // --- DYNAMIC ADDITION/REMOVAL (CORRIGIDA - Garantia de que o índice é numérico) ---
+
+    function getNextIndex(container, selector) {
+        const sections = container.querySelectorAll(selector);
+        if (sections.length === 0) return 0;
+        let maxIndex = -1;
+        
+        sections.forEach(section => {
+            const indexStr = section.getAttribute('data-index');
+            const index = parseInt(indexStr);
+            
+            // CORREÇÃO: Garante que o índice é um número válido antes de usá-lo na comparação
+            if (!isNaN(index) && index > maxIndex) { 
+                 maxIndex = index;
+            }
+        });
+        
+        // Se nenhum índice válido foi encontrado, e há seções, retorna o número de seções como fallback.
+        // Senão, retorna o próximo.
+        return maxIndex + 1;
+    }
+    
+    function adicionarNovaDoenca() {
+        const newIndex = getNextIndex(doencasContainer, '.doenca-section');
+        const novaDoencaTemplate = {
+            "NomeDoenca": `Nova Doença ${newIndex + 1}`,
+            "DataCriacao": formatarDataParaJSON(new Date().toLocaleDateString('pt-BR')),
+            "DataAtualizacao": formatarDataParaJSON(new Date().toLocaleDateString('pt-BR')),
+            "Versao": "1.0",
+            "CulturasAfetadas": []
+        };
+
+        const html = gerarDoencaHtml(novaDoencaTemplate, newIndex); 
+        doencasContainer.insertAdjacentHTML('beforeend', html);
+        
+        alert(`Nova Doença (${novaDoencaTemplate.NomeDoenca}) adicionada.`);
+    }
+
+    function adicionarNovaCultura(doencaIndex) {
+        const culturasContainer = document.getElementById(`culturas-container-${doencaIndex}`);
+        const newIndex = getNextIndex(culturasContainer, '.cultura-section');
+        
+        // CORREÇÃO: Garante que o índice é numérico para exibição (mesmo que newIndex seja 0)
+        const culturaDisplayIndex = isNaN(newIndex) ? 1 : newIndex + 1;
+        
+        const novaCulturaTemplate = {
+            "Cultura": `Nova Cultura ${culturaDisplayIndex}`,
+            "PesoImpacto": 0,
+            "DadosPatogenosAssociados": [],
+            "Sintomas": [],
+            "CondicoesFavoraveis": [],
+            "BiocontroladoresDoenca": [{ "ComercialDoenca": [], "ConservativoDoenca": [], "IndiceBiocontroleAssociado": [] }],
+            "MicrorganimosAgravantes": []
+        };
+
+        const html = gerarCulturaHtml(novaCulturaTemplate, doencaIndex, newIndex); 
+        culturasContainer.insertAdjacentHTML('beforeend', html);
+        
+        alert(`Nova Cultura (${novaCulturaTemplate.Cultura}) adicionada à Doença ${doencaIndex + 1}.`);
+    }
+
+    function adicionarNovoPatogeno(doencaIndex, culturaIndex) {
+        const patogenosContainer = document.getElementById(`patogenos-container-${doencaIndex}-${culturaIndex}`);
+        const newIndex = getNextIndex(patogenosContainer, '.patogeno-section');
+        
+        // CORREÇÃO: Garante que o índice é numérico para exibição, resolvendo o NaN.
+        const patogenoDisplayIndex = isNaN(newIndex) ? 1 : newIndex + 1;
+        
+        const novoPatogenoTemplate = {
+            "NomePatogeno": `Novo Patógeno ${patogenoDisplayIndex}`,
+            "Sinonimos": [],
+            "TipoPatogeno": "Fungo",
+            "Peso": 0,
+            "BiocontroladoresPatogenos": [
+                {"ComerciaisEspecificos": [], "ConservativosEspecificos": [], "IndiceAssociado": []}
+            ],
+            "MicrorganimosAgonistas": []
+        };
+        
+        // O quarto parâmetro (newIndex) é o data-index do novo Patógeno.
+        const html = gerarPatogenoHtml(novoPatogenoTemplate, doencaIndex, culturaIndex, newIndex); 
+        patogenosContainer.insertAdjacentHTML('beforeend', html);
+        
+        alert(`Novo Patógeno adicionado à Cultura ${culturaIndex + 1}.`);
+    }
+
+    function removerElemento(button, className) {
+        if (confirm(`Tem certeza que deseja remover esta seção (${className})?`)) {
+            button.closest(`.${className}`).remove();
+        }
+    }
+    
+    window.onload = function() {
+        if (!document.getElementById('json-file-input').files[0]) {
+            currentDataArray = []; 
+            formContent.style.display = 'block';
+        }
+    };
+</script>
+
+</body>
+</html>
